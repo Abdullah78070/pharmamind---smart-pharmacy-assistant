@@ -1,52 +1,70 @@
 name: Build Android APK
-on: [push]
+
+on:
+  push:
+    branches:
+      - main
+      - master
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
+      # 1️⃣ سحب الكود
       - name: Checkout Code
         uses: actions/checkout@v4
 
+      # 2️⃣ إعداد Node.js
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
 
+      # 3️⃣ تثبيت وبناء تطبيق الويب
       - name: Install and Build Web App
         run: |
           npm install
           npm run build
 
+      # 4️⃣ إعداد Java
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: 17
 
+      # 5️⃣ إعداد Android SDK (مهم جداً)
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      # 6️⃣ تثبيت Bubblewrap
       - name: Install Bubblewrap
         run: npm install -g @bubblewrap/cli
 
+      # 7️⃣ إنشاء مشروع أندرويد
       - name: Build Android Project
         run: |
-          mkdir -p ~/.bubblewrap
-          echo "{\"jdkPath\":\"$JAVA_HOME\",\"androidSdkPath\":\"$ANDROID_SDK_ROOT\"}" > ~/.bubblewrap/config.json
-          
-          yes | bubblewrap build --manifest=dist/manifest.json --skipConfig
+          yes | bubblewrap build \
+            --manifest=dist/manifest.json \
+            --skipConfig
 
-      - name: Build APK with Gradle
+      # 8️⃣ بناء APK
+      - name: Build Release APK
         run: |
           cd android
           chmod +x gradlew
           ./gradlew assembleRelease
 
+      # 9️⃣ تجميع ملف APK
       - name: Collect APK
         run: |
           mkdir -p output
           find android -name "*release*.apk" -exec cp {} output/ \;
+          echo "APK files:"
           ls -l output
 
+      # 🔟 رفع الـ APK
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
