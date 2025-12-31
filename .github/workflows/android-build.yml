@@ -18,31 +18,37 @@ jobs:
           npm install
           npm run build
 
-      - name: Setup Java and Android SDK
-        uses: android-actions/setup-android@v3
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
 
-      - name: Build APK
+      - name: Build Android APK
         run: |
+          # تثبيت أداة بسيطة لتحويل الويب إلى أندرويد
           npm install -g @bubblewrap/cli
-          # إعداد التهيئة
+          
+          # إنشاء المجلدات المطلوبة
           mkdir -p ~/.bubblewrap
-          echo "{\"jdkPath\":\"$JAVA_HOME\",\"androidSdkPath\":\"$ANDROID_SDK_ROOT\"}" > ~/.bubblewrap/config.json
-          
-          # بناء التطبيق
-          yes | bubblewrap build --manifest=dist/manifest.json --skipConfig || true
-          
-          # إنشاء مجلد output ونقل أي ملف APK إليه
           mkdir -p output
+          
+          # إعداد المسارات يدوياً بدقة
+          echo "{\"jdkPath\":\"$JAVA_HOME\",\"androidSdkPath\":\"/usr/local/lib/android/sdk\"}" > ~/.bubblewrap/config.json
+          
+          # محاولة البناء مع تجاهل الأخطاء الطفيفة
+          yes | npx bubblewrap build --manifest=dist/manifest.json --skipConfig || true
+          
+          # البحث عن أي ملف APK في كل مكان ونقله لمجلد output الذي أنشأته
           find . -name "*.apk" -exec cp {} ./output/ \;
           
-          # طباعة المحتويات للتأكد
-          echo "--- محتويات مجلد output ---"
+          # إظهار المحتويات في السجلات للتأكد
+          echo "Checking output folder:"
           ls -R output
 
-      - name: Upload APK Artifact
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Pharmacy-App-Package
-          # هنا نطلب منه رفع كل ما هو موجود داخل مجلد output
+          name: PharmacyApp-Release
           path: output/
-          if-no-files-found: warn
+          if-no-files-found: error
