@@ -12,16 +12,25 @@ jobs:
         with:
           node-version: 20
 
-      - name: Build Web App
+      - name: Install dependencies and Build
         run: |
           npm install
           npm run build
 
-      - name: Build Android APK
-        uses: javierbrea/pwa-to-apk@v1
+      - name: Setup Java
+        uses: actions/setup-java@v4
         with:
-          # المسار لمجلد ملفات الموقع بعد البناء
-          web_app_path: ./dist
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Build APK with Bubblewrap
+        run: |
+          # إنشاء ملف إعدادات وهمي لمنع الأداة من طرح أسئلة
+          mkdir -p ~/.bubblewrap
+          echo '{"jdkPath":"/usr/lib/jvm/temurin-17-jdk-amd64","androidSdkPath":"/usr/local/lib/android/sdk"}' > ~/.bubblewrap/config.json
+          
+          # تشغيل البناء مع الإجابة التلقائية بـ Yes
+          yes | npx @bubblewrap/cli build --skipConfig || true
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
