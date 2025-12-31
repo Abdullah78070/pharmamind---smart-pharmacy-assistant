@@ -13,34 +13,33 @@ jobs:
         with:
           node-version: 20
 
-      - name: Install dependencies and Build Web App
+      - name: Install and Build Web App
         run: |
           npm install
           npm run build
 
-      - name: Setup Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: '17'
+      - name: Setup Java and Android SDK
+        uses: android-actions/setup-android@v3
 
       - name: Build APK
         run: |
-          # تثبيت أداة البناء بشكل مستقل وتجنب الأسئلة التفاعلية
           npm install -g @bubblewrap/cli
-          
-          # إنشاء الإعدادات يدوياً لتجنب سؤال الـ JDK
+          # إنشاء الإعدادات باستخدام المسارات الديناميكية للسيرفر
           mkdir -p ~/.bubblewrap
-          echo '{"jdkPath":"/usr/lib/jvm/temurin-17-jdk-amd64","androidSdkPath":"/usr/local/lib/android/sdk"}' > ~/.bubblewrap/config.json
+          echo "{\"jdkPath\":\"$JAVA_HOME\",\"androidSdkPath\":\"$ANDROID_SDK_ROOT\"}" > ~/.bubblewrap/config.json
           
-          # بناء التطبيق باستخدام إعدادات افتراضية سريعة
-          bubblewrap build --manifest=dist/manifest.json --skipConfig --yes || true
+          # محاولة البناء المباشر
+          yes | bubblewrap build --manifest=dist/manifest.json --skipConfig || true
           
-          # البحث عن أي ملف APK تم إنتاجه ووضعه في المجلد الرئيسي
-          find . -name "*.apk" -exec cp {} ./app-release.apk \;
+          # أمر البحث الذي طلبته: سيظهر لك كل الملفات في السجلات (Logs)
+          echo "--- قائمة الملفات الموجودة الآن ---"
+          find . -maxdepth 3 -not -path '*/.*'
 
-      - name: Upload APK Artifact
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: pharmacy-app-final
-          path: app-release.apk
+          name: Pharmacy-App-Package
+          path: |
+            ./*.apk
+            ./app/build/outputs/apk/release/*.apk
+          if-no-files-found: warn
