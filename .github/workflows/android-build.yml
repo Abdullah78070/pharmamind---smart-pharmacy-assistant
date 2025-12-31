@@ -5,14 +5,15 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout Code
+        uses: actions/checkout@v4
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
 
-      - name: Install dependencies and Build
+      - name: Install dependencies and Build Web App
         run: |
           npm install
           npm run build
@@ -25,15 +26,20 @@ jobs:
 
       - name: Build APK with Bubblewrap
         run: |
-          # إنشاء ملف إعدادات وهمي لمنع الأداة من طرح أسئلة
+          # إعداد ملف التهيئة آلياً لتجنب الأسئلة التفاعلية
           mkdir -p ~/.bubblewrap
           echo '{"jdkPath":"/usr/lib/jvm/temurin-17-jdk-amd64","androidSdkPath":"/usr/local/lib/android/sdk"}' > ~/.bubblewrap/config.json
           
-          # تشغيل البناء مع الإجابة التلقائية بـ Yes
+          # البدء في بناء الـ APK مع الموافقة التلقائية على الشروط
           yes | npx @bubblewrap/cli build --skipConfig || true
 
-      - name: Upload APK
+      - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: pharmacy-app-apk
-          path: ./*.apk
+          name: pharmacy-app-release
+          # المسار المعدل للبحث عن ملف الـ APK في كل مكان محتمل
+          path: |
+            ./*.apk
+            ./app-release.apk
+            ./output/*.apk
+            ./app/build/outputs/apk/release/*.apk
