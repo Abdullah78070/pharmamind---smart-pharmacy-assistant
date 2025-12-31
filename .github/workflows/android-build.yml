@@ -26,20 +26,19 @@ jobs:
 
       - name: Build APK with Bubblewrap
         run: |
-          # إعداد ملف التهيئة آلياً لتجنب الأسئلة التفاعلية
+          # إعداد ملف التهيئة آلياً
           mkdir -p ~/.bubblewrap
           echo '{"jdkPath":"/usr/lib/jvm/temurin-17-jdk-amd64","androidSdkPath":"/usr/local/lib/android/sdk"}' > ~/.bubblewrap/config.json
           
-          # البدء في بناء الـ APK مع الموافقة التلقائية على الشروط
+          # بناء الـ APK
           yes | npx @bubblewrap/cli build --skipConfig || true
+          
+          # خدعة البحث عن الملف ونقله للمجلد الرئيسي لضمان رفعه
+          find . -name "*.apk" -exec cp {} . \;
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: pharmacy-app-release
-          # المسار المعدل للبحث عن ملف الـ APK في كل مكان محتمل
-          path: |
-            ./*.apk
-            ./app-release.apk
-            ./output/*.apk
-            ./app/build/outputs/apk/release/*.apk
+          name: pharmacy-app-final
+          path: ./*.apk
+          if-no-files-found: error
