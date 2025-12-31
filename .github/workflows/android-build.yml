@@ -17,7 +17,8 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: '17'
+          # التعديل هنا: استخدام جافا 21 لتوافق أدوات الأندرويد الجديدة
+          java-version: '21'
 
       - name: Build Web Project
         run: |
@@ -26,29 +27,29 @@ jobs:
 
       - name: Setup Capacitor & Create Android App
         run: |
-          # تثبيت أدوات كاباستور المسؤولة عن تحويل الموقع لتطبيق
+          # تثبيت أدوات كاباستور
           npm install @capacitor/core @capacitor/cli @capacitor/android
           
-          # تهيئة المشروع (اسم التطبيق: MyPharmacy)
+          # تهيئة المشروع
           npx cap init MyPharmacy com.pharmacy.app --web-dir dist
           
           # إضافة منصة الأندرويد
           npx cap add android
           
-          # نسخ ملفات الموقع المبنية إلى داخل مجلد الأندرويد
+          # نسخ ملفات الموقع
           npx cap sync
 
       - name: Build APK using Gradle
         run: |
           cd android
-          # منح صلاحية التنفيذ لملف البناء
+          # منح صلاحية التنفيذ
           chmod +x gradlew
-          # أمر البناء الرسمي للأندرويد (يضمن عدم وجود أخطاء مسارات)
+          # أمر البناء
           ./gradlew assembleDebug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: pharmacy-app-debug
-          # المسار الرسمي الذي يخرج فيه الـ APK دائماً عند استخدام Gradle
+          # المسار الصحيح للملف الناتج
           path: android/app/build/outputs/apk/debug/app-debug.apk
