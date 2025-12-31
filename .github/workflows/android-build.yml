@@ -36,11 +36,9 @@ jobs:
 
       - name: Build Android Project
         run: |
-          bubblewrap build \
+          printf "n\n" | bubblewrap build \
             --manifest=dist/manifest.json \
-            --skipConfig \
-            --noPrompt \
-            --skipJdkDownload
+            --skipConfig
 
       - name: Build Release APK
         run: |
