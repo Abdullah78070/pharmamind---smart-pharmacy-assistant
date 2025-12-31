@@ -1,13 +1,9 @@
-name: Build Android APK
-
-on:
-  push:
-    branches: [main, master]
+name: Build Android APK (Capacitor Method)
+on: [push]
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -17,43 +13,42 @@ jobs:
         with:
           node-version: 20
 
-      - name: Install and Build Web App
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Build Web Project
         run: |
           npm install
           npm run build
 
-      - name: Setup Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: 17
-
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
-
-      - name: Install Bubblewrap
-        run: npm install -g @bubblewrap/cli
-
-      - name: Build Android Project
+      - name: Setup Capacitor & Create Android App
         run: |
-          printf "n\n" | bubblewrap build \
-            --manifest=dist/manifest.json \
-            --skipConfig
+          # تثبيت أدوات كاباستور المسؤولة عن تحويل الموقع لتطبيق
+          npm install @capacitor/core @capacitor/cli @capacitor/android
+          
+          # تهيئة المشروع (اسم التطبيق: MyPharmacy)
+          npx cap init MyPharmacy com.pharmacy.app --web-dir dist
+          
+          # إضافة منصة الأندرويد
+          npx cap add android
+          
+          # نسخ ملفات الموقع المبنية إلى داخل مجلد الأندرويد
+          npx cap sync
 
-      - name: Build Release APK
+      - name: Build APK using Gradle
         run: |
           cd android
+          # منح صلاحية التنفيذ لملف البناء
           chmod +x gradlew
-          ./gradlew assembleRelease
-
-      - name: Collect APK
-        run: |
-          mkdir -p output
-          find android -name "*release*.apk" -exec cp {} output/ \;
-          ls -l output
+          # أمر البناء الرسمي للأندرويد (يضمن عدم وجود أخطاء مسارات)
+          ./gradlew assembleDebug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: PharmacyApp-Release
-          path: output/*.apk
+          name: pharmacy-app-debug
+          # المسار الرسمي الذي يخرج فيه الـ APK دائماً عند استخدام Gradle
+          path: android/app/build/outputs/apk/debug/app-debug.apk
