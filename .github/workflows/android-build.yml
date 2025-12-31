@@ -24,22 +24,25 @@ jobs:
       - name: Build APK
         run: |
           npm install -g @bubblewrap/cli
-          # إنشاء الإعدادات باستخدام المسارات الديناميكية للسيرفر
+          # إعداد التهيئة
           mkdir -p ~/.bubblewrap
           echo "{\"jdkPath\":\"$JAVA_HOME\",\"androidSdkPath\":\"$ANDROID_SDK_ROOT\"}" > ~/.bubblewrap/config.json
           
-          # محاولة البناء المباشر
+          # بناء التطبيق
           yes | bubblewrap build --manifest=dist/manifest.json --skipConfig || true
           
-          # أمر البحث الذي طلبته: سيظهر لك كل الملفات في السجلات (Logs)
-          echo "--- قائمة الملفات الموجودة الآن ---"
-          find . -maxdepth 3 -not -path '*/.*'
+          # إنشاء مجلد output ونقل أي ملف APK إليه
+          mkdir -p output
+          find . -name "*.apk" -exec cp {} ./output/ \;
+          
+          # طباعة المحتويات للتأكد
+          echo "--- محتويات مجلد output ---"
+          ls -R output
 
-      - name: Upload APK
+      - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: Pharmacy-App-Package
-          path: |
-            ./*.apk
-            ./app/build/outputs/apk/release/*.apk
+          # هنا نطلب منه رفع كل ما هو موجود داخل مجلد output
+          path: output/
           if-no-files-found: warn
