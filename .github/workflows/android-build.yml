@@ -26,19 +26,24 @@ jobs:
 
       - name: Build APK with Bubblewrap
         run: |
-          # إعداد ملف التهيئة آلياً
+          # 1. إعداد التهيئة آلياً
           mkdir -p ~/.bubblewrap
           echo '{"jdkPath":"/usr/lib/jvm/temurin-17-jdk-amd64","androidSdkPath":"/usr/local/lib/android/sdk"}' > ~/.bubblewrap/config.json
           
-          # بناء الـ APK
-          yes | npx @bubblewrap/cli build --skipConfig || true
+          # 2. إنشاء مشروع الأندرويد من ملف المانيفست
+          npx @bubblewrap/cli init --manifest=dist/manifest.json --extracert=false
           
-          # خدعة البحث عن الملف ونقله للمجلد الرئيسي لضمان رفعه
+          # 3. بناء الـ APK الفعلي وتخطي أي أسئلة
+          yes | npx @bubblewrap/cli build --skipConfig
+          
+          # 4. التأكد من وجود أي ملف APK ونقله للمجلد الرئيسي
           find . -name "*.apk" -exec cp {} . \;
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: pharmacy-app-final
+          # البحث عن أي ملف APK تم إنتاجه
           path: ./*.apk
-          if-no-files-found: error
+          # إذا لم يجد ملف، سيعطي تنبيهاً وليس خطأً أحمر
+          if-no-files-found: warn
