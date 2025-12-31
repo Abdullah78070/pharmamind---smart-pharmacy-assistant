@@ -4,6 +4,7 @@ on: [push]
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -21,34 +22,33 @@ jobs:
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
-          distribution: 'temurin'
-          java-version: '17'
+          distribution: temurin
+          java-version: 17
 
-      - name: Build Android APK
+      - name: Install Bubblewrap
+        run: npm install -g @bubblewrap/cli
+
+      - name: Build Android Project
         run: |
-          # تثبيت أداة بسيطة لتحويل الويب إلى أندرويد
-          npm install -g @bubblewrap/cli
-          
-          # إنشاء المجلدات المطلوبة
           mkdir -p ~/.bubblewrap
+          echo "{\"jdkPath\":\"$JAVA_HOME\",\"androidSdkPath\":\"$ANDROID_SDK_ROOT\"}" > ~/.bubblewrap/config.json
+          
+          yes | bubblewrap build --manifest=dist/manifest.json --skipConfig
+
+      - name: Build APK with Gradle
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleRelease
+
+      - name: Collect APK
+        run: |
           mkdir -p output
-          
-          # إعداد المسارات يدوياً بدقة
-          echo "{\"jdkPath\":\"$JAVA_HOME\",\"androidSdkPath\":\"/usr/local/lib/android/sdk\"}" > ~/.bubblewrap/config.json
-          
-          # محاولة البناء مع تجاهل الأخطاء الطفيفة
-          yes | npx bubblewrap build --manifest=dist/manifest.json --skipConfig || true
-          
-          # البحث عن أي ملف APK في كل مكان ونقله لمجلد output الذي أنشأته
-          find . -name "*.apk" -exec cp {} ./output/ \;
-          
-          # إظهار المحتويات في السجلات للتأكد
-          echo "Checking output folder:"
-          ls -R output
+          find android -name "*release*.apk" -exec cp {} output/ \;
+          ls -l output
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: PharmacyApp-Release
-          path: output/
-          if-no-files-found: error
+          path: output/*.apk
