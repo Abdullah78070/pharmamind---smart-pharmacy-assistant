@@ -1,0 +1,5 @@
+{
+  "name": "PharmaMind - Smart Pharmacy Assistant",
+  "description": "An offline-first commercial web application for calculating drug discounts, analyzing purchase history, and managing invoices with intelligent insights.",
+  "requestFramePermissions": []
+}
