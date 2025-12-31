@@ -25,12 +25,13 @@ jobs:
 
       - name: Build APK with Bubblewrap
         run: |
-          npx @bubblewrap/cli init --manifest=dist/manifest.json
-          npx @bubblewrap/cli build --skipConfig
-          mv *.apk app-release.apk
+          # هذه الأسطر تقوم بالإجابة على أسئلة الأداة تلقائياً لتجنب توقف السيرفر
+          npx @bubblewrap/cli init --manifest=dist/manifest.json --extracert=false
+          yes | npx @bubblewrap/cli build --skipConfig
+          mv *.apk app-release.apk || true
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: my-pharmacy-app
-          path: app-release.apk
+          name: pharmacy-app-release
+          path: ./*.apk
